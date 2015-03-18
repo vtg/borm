@@ -55,6 +55,9 @@ func (db *DB) Find(buckets []string, id string, i interface{}) error {
 	if !db.open {
 		return fmt.Errorf("db must be opened before saving!")
 	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
+	}
 	return db.db.View(func(tx *bolt.Tx) error {
 		var err error
 		b := getBucket(tx, buckets)
@@ -76,6 +79,9 @@ func (db *DB) Find(buckets []string, id string, i interface{}) error {
 func (db *DB) Save(buckets []string, m mod) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
+	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
@@ -137,6 +143,9 @@ func (db *DB) DeleteKeys(buckets []string, keys []string) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
+	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
 		b := getBucket(tx, buckets)
@@ -158,6 +167,9 @@ func (db *DB) DeleteKeys(buckets []string, keys []string) error {
 func (db *DB) List(buckets []string, dest interface{}, params ...Params) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
+	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
 	}
 
 	opts := parseParams(params)
@@ -213,6 +225,9 @@ func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, 
 
 	if !db.open {
 		return res, fmt.Errorf("db is not opened")
+	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
 	}
 
 	opts := parseParams(params)
