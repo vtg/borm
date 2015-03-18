@@ -227,7 +227,7 @@ func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, 
 		return res, fmt.Errorf("db is not opened")
 	}
 	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+		return res, errors.New("No bucket provided")
 	}
 
 	opts := parseParams(params)
