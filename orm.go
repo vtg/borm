@@ -200,7 +200,7 @@ func (db *DB) List(buckets []string, dest interface{}, params ...Params) error {
 		c := b.Cursor()
 		i := 0
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if i < opts.Offset || i > opts.Offset+opts.Limit {
+			if len(v) == 0 || i < opts.Offset || i > opts.Offset+opts.Limit {
 				continue
 			}
 			i++
