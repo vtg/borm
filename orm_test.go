@@ -150,6 +150,18 @@ func TestDelete(t *testing.T) {
 	// time.Sleep(1 * time.Second)
 }
 
+func TestDeleteBucket(t *testing.T) {
+	openDB()
+
+	db.SaveValue([]string{"buck1", "buck2"}, "1", []byte("2"))
+
+	err := db.DeleteBuckets([]string{"buck1", "buck2"}, []string{"1"})
+	assertEqual(t, true, err != nil)
+
+	err = db.DeleteBuckets([]string{"buck1"}, []string{"buck2"})
+	assertEqual(t, nil, err)
+}
+
 func TestConcurrentCreation(t *testing.T) {
 	openDB()
 	var wg sync.WaitGroup

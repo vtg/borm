@@ -159,6 +159,30 @@ func (db *DB) DeleteKeys(buckets []string, keys []string) error {
 	})
 }
 
+// DeleteBuckets deletes records from database by keys
+// 		db.DeleteBuckets([]string{"bucket"}, []string{"1","2","3"})
+func (db *DB) DeleteBuckets(buckets []string, keys []string) error {
+	if !db.open {
+		return fmt.Errorf("db is not opened")
+	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
+	}
+
+	return db.db.Update(func(tx *bolt.Tx) error {
+		b := getBucket(tx, buckets)
+		if b == nil {
+			return fmt.Errorf("Bucket not found")
+		}
+		for _, v := range keys {
+			if err := b.DeleteBucket([]byte(v)); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // List fills models slice with records from database
 // 		m := []Model{}
 // 		db.List([]string{"bucket"}, &m)
