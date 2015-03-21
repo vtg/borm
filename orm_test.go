@@ -133,6 +133,17 @@ func TestList(t *testing.T) {
 	assertEqual(t, p1.ID, res1[1].ID)
 }
 
+func TestListItems(t *testing.T) {
+	openDB()
+	p := Person{Name: "John Doe"}
+	db.Save([]string{"peoplelist1"}, &p)
+	p1 := Person{Name: "John1 Doe"}
+	db.Save([]string{"peoplelist1"}, &p1)
+
+	res, _ := db.ListItems([]string{"peoplelist"})
+	assertEqual(t, 2, len(res))
+}
+
 func TestDelete(t *testing.T) {
 	openDB()
 

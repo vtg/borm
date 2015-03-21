@@ -283,18 +283,17 @@ func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
 // ListItems returns raw records from database
 func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, error) {
 	l := logit(db.Log, "LIST", buckets, "", params)
-	r, err := db.listItems(buckets, params...)
-	return r, l.done(err)
+	res := make(map[string][]byte)
+	err := db.listItems(buckets, res, params...)
+	return res, l.done(err)
 }
 
-func (db *DB) listItems(buckets []string, params ...Params) (map[string][]byte, error) {
-	res := make(map[string][]byte)
-
+func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Params) error {
 	if !db.open {
-		return res, fmt.Errorf("db is not opened")
+		return fmt.Errorf("db is not opened")
 	}
 	if len(buckets) == 0 {
-		return res, errors.New("No bucket provided")
+		return errors.New("No bucket provided")
 	}
 
 	opts := parseParams(params)
@@ -317,7 +316,7 @@ func (db *DB) listItems(buckets []string, params ...Params) (map[string][]byte, 
 
 		return nil
 	})
-	return res, err
+	return err
 }
 
 // Count returns number of records in bucket
