@@ -50,29 +50,34 @@ func main() {
 	db.Log = true
 	defer db.Close()
 
-	// the bucket that will store Persons
-	peopleBucket := []string{"people"}
+	// the bucket that will store Person
+	bucket := []string{"people"}
 
 	// creating Person
 	p := Person{Name: "John Doe"}
-	db.Save(peopleBucket, &p)
+	db.Save(bucket, &p)
 	fmt.Println(p.ID, p.Name, p.Age)
 
 	//updating Person
 	p.Age = 10
-	db.Save(peopleBucket, &p)
+	db.Save(bucket, &p)
 	fmt.Println(p.ID, p.Name, p.Age)
 
 	// get Person from database
 	p1 := Person{}
-	db.Find(peopleBucket, p.ID, &p1)
+	db.Find(bucket, p.ID, &p1)
 	fmt.Println(p1.ID, p1.Name, p1.Age)
 
+	// list people
+	people := []Person{}
+	db.List(bucket, &people)
+	fmt.Println(people)
+
 	// delete Person from database
-	db.Delete(peopleBucket, &p)
+	db.Delete(bucket, &p)
 
 	// count peoples
-	fmt.Println(db.Count(peopleBucket))
+	fmt.Println(db.Count(bucket))
 }
 ```
 
