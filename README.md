@@ -81,7 +81,16 @@ func main() {
 }
 ```
 
-
+######Events
+borm has events subscription support.  
+There are 3 types of Events "Created", "Updated" and "Deleted".  
+Event names prefixed with model type name.
+```go
+//Subscribing to Person creation event
+borm.Events.Sub("PersonCreated", func(e *pubsub.Event) {
+	fmt.Println(e.Name, e.Objects[0].(*Person))
+})
+```
 
 GoDoc https://godoc.org/github.com/vtg/borm
 
