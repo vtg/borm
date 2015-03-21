@@ -25,6 +25,7 @@ func init() {
 func openDB() {
 	if !db.open {
 		db, _ = Open(dbFile)
+		// db.Log = true
 	}
 }
 
@@ -165,6 +166,7 @@ func TestDeleteBucket(t *testing.T) {
 func TestConcurrentCreation(t *testing.T) {
 	openDB()
 	var wg sync.WaitGroup
+	db.Log = false
 
 	for k := 0; k < 100; k++ {
 		wg.Add(1)
@@ -185,6 +187,7 @@ func TestCount(t *testing.T) {
 	openDB()
 	var wg sync.WaitGroup
 
+	db.Log = false
 	for k := 0; k < 100; k++ {
 		wg.Add(1)
 		go func() {
@@ -206,7 +209,7 @@ func benchListPrepare() {
 		return
 	}
 	openDB()
-
+	db.Log = false
 	for k := 0; k < 100; k++ {
 		p := Person{Name: "John Doe"}
 		db.Save([]string{"pep"}, &p)

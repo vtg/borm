@@ -26,6 +26,7 @@ func init() {
 // DB
 type DB struct {
 	File string
+	Log  bool
 
 	db   *bolt.DB
 	open bool
@@ -52,6 +53,12 @@ func (db *DB) Close() {
 // 		m := Model{}
 // 		db.Find([]string{"bucket"}, &m)
 func (db *DB) Find(buckets []string, id string, i interface{}) error {
+	l := logit(db.Log, "FIND", buckets, id, nil)
+	err := db.find(buckets, id, i)
+	return l.done(err)
+}
+
+func (db *DB) find(buckets []string, id string, i interface{}) error {
 	if !db.open {
 		return fmt.Errorf("db must be opened before saving!")
 	}
@@ -62,7 +69,7 @@ func (db *DB) Find(buckets []string, id string, i interface{}) error {
 		var err error
 		b := getBucket(tx, buckets)
 		if b == nil {
-			return fmt.Errorf("Bucket not found")
+			return errors.New("Bucket not found")
 		}
 
 		k := []byte(id)
@@ -77,6 +84,12 @@ func (db *DB) Find(buckets []string, id string, i interface{}) error {
 // 		m := Model{Name: "Model Name"}
 // 		db.Save([]string{"bucket"}, &m)
 func (db *DB) Save(buckets []string, m mod) error {
+	l := logit(db.Log, "SAVE", buckets, "", m)
+	err := db.save(buckets, m)
+	return l.done(err)
+}
+
+func (db *DB) save(buckets []string, m mod) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
@@ -112,6 +125,12 @@ func (db *DB) Save(buckets []string, m mod) error {
 
 // SaveValue saves key/value pair into database
 func (db *DB) SaveValue(buckets []string, id string, val []byte) error {
+	l := logit(db.Log, "SAVE-VALUE", buckets, "", val)
+	err := db.saveValue(buckets, id, val)
+	return l.done(err)
+}
+
+func (db *DB) saveValue(buckets []string, id string, val []byte) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
@@ -140,6 +159,12 @@ func (db *DB) Delete(buckets []string, m mod) error {
 // DeleteKeys deletes records from database by keys
 // 		db.DeleteKeys([]string{"bucket"}, []string{"1","2","3"})
 func (db *DB) DeleteKeys(buckets []string, keys []string) error {
+	l := logit(db.Log, "Delete", buckets, "", keys)
+	err := db.deleteKeys(buckets, keys)
+	return l.done(err)
+}
+
+func (db *DB) deleteKeys(buckets []string, keys []string) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
@@ -162,6 +187,12 @@ func (db *DB) DeleteKeys(buckets []string, keys []string) error {
 // DeleteBuckets deletes records from database by keys
 // 		db.DeleteBuckets([]string{"bucket"}, []string{"1","2","3"})
 func (db *DB) DeleteBuckets(buckets []string, keys []string) error {
+	l := logit(db.Log, "DELETE BUCKET", buckets, "", keys)
+	err := db.deleteBuckets(buckets, keys)
+	return l.done(err)
+}
+
+func (db *DB) deleteBuckets(buckets []string, keys []string) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
@@ -189,6 +220,12 @@ func (db *DB) DeleteBuckets(buckets []string, keys []string) error {
 // load with params
 // 		db.List([]string{"bucket"}, &m, Params{Offset: 10, Limit: 30})
 func (db *DB) List(buckets []string, dest interface{}, params ...Params) error {
+	l := logit(db.Log, "LIST", buckets, "", params)
+	err := db.list(buckets, dest, params...)
+	return l.done(err)
+}
+
+func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
@@ -245,6 +282,12 @@ func (db *DB) List(buckets []string, dest interface{}, params ...Params) error {
 
 // ListItems returns raw records from database
 func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, error) {
+	l := logit(db.Log, "LIST", buckets, "", params)
+	r, err := db.listItems(buckets, params...)
+	return r, l.done(err)
+}
+
+func (db *DB) listItems(buckets []string, params ...Params) (map[string][]byte, error) {
 	res := make(map[string][]byte)
 
 	if !db.open {
