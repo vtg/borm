@@ -294,14 +294,14 @@ func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
 
 // ListKeys fills models slice with records by keys provided
 // 		m := []Model{}
-// 		db.ListKeys([]string{"bucket"}, []string{"1","2"}, &m)
-func (db *DB) ListKeys(buckets, keys []string, dest interface{}) error {
+// 		db.ListKeys([]string{"bucket"}, [][]byte{[]byte("1"),[]byte("2")}, &m)
+func (db *DB) ListKeys(buckets []string, keys [][]byte, dest interface{}) error {
 	l := logit(db.Log, "LISTKEYS", buckets, "", nil)
 	err := db.listKeys(buckets, keys, dest)
 	return l.done(err)
 }
 
-func (db *DB) listKeys(buckets, keys []string, dest interface{}) error {
+func (db *DB) listKeys(buckets []string, keys [][]byte, dest interface{}) error {
 	if err := db.check(buckets); err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ func (db *DB) listKeys(buckets, keys []string, dest interface{}) error {
 		tp := deref(slice.Elem())
 
 		for _, key := range keys {
-			v := b.Get([]byte(key))
+			v := b.Get(key)
 			if v == nil {
 				continue
 			}

@@ -142,7 +142,7 @@ func TestListKeys(t *testing.T) {
 	db.Save([]string{"list2"}, &p3)
 
 	res := []Person{}
-	db.ListKeys([]string{"list2"}, []string{p.ID, p3.ID, "11111"}, &res)
+	db.ListKeys([]string{"list2"}, [][]byte{[]byte(p.ID), []byte(p3.ID), []byte("11111")}, &res)
 	assertEqual(t, []Person{p, p3}, res)
 }
 
