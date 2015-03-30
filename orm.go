@@ -80,6 +80,33 @@ func (db *DB) find(buckets []string, id string, i interface{}) error {
 	})
 }
 
+// GET returns value by key
+// 		val, err := db.FindValue([]string{"bucket"}, "1")
+func (db *DB) Get(buckets []string, key string) ([]byte, error) {
+	l := logit(db.Log, "GET", buckets, key, nil)
+	v, err := db.get(buckets, key)
+	return v, l.done(err)
+}
+
+func (db *DB) get(buckets []string, key string) ([]byte, error) {
+	if !db.open {
+		return []byte(""), fmt.Errorf("db must be opened before saving!")
+	}
+	if len(buckets) == 0 {
+		return []byte(""), errors.New("No bucket provided")
+	}
+	var v []byte
+	err := db.db.View(func(tx *bolt.Tx) error {
+		b := getBucket(tx, buckets)
+		if b == nil {
+			return errors.New("Bucket not found")
+		}
+		v = b.Get([]byte(key))
+		return nil
+	})
+	return v, err
+}
+
 // Save saves model into database
 // 		m := Model{Name: "Model Name"}
 // 		db.Save([]string{"bucket"}, &m)
