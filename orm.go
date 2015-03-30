@@ -59,12 +59,10 @@ func (db *DB) Find(buckets []string, id string, i interface{}) error {
 }
 
 func (db *DB) find(buckets []string, id string, i interface{}) error {
-	if !db.open {
-		return fmt.Errorf("db must be opened before saving!")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
-	}
+
 	return db.db.View(func(tx *bolt.Tx) error {
 		var err error
 		b := getBucket(tx, buckets)
@@ -89,12 +87,10 @@ func (db *DB) Get(buckets []string, key string) ([]byte, error) {
 }
 
 func (db *DB) get(buckets []string, key string) ([]byte, error) {
-	if !db.open {
-		return []byte(""), fmt.Errorf("db must be opened before saving!")
+	if err := db.check(buckets); err != nil {
+		return nil, err
 	}
-	if len(buckets) == 0 {
-		return []byte(""), errors.New("No bucket provided")
-	}
+
 	var v []byte
 	err := db.db.View(func(tx *bolt.Tx) error {
 		b := getBucket(tx, buckets)
@@ -117,11 +113,8 @@ func (db *DB) Save(buckets []string, m mod) error {
 }
 
 func (db *DB) save(buckets []string, m mod) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
-	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
@@ -158,8 +151,8 @@ func (db *DB) SaveValue(buckets []string, id string, val []byte) error {
 }
 
 func (db *DB) saveValue(buckets []string, id string, val []byte) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
@@ -192,11 +185,8 @@ func (db *DB) DeleteKeys(buckets []string, keys []string) error {
 }
 
 func (db *DB) deleteKeys(buckets []string, keys []string) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
-	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
@@ -220,11 +210,8 @@ func (db *DB) DeleteBuckets(buckets []string, keys []string) error {
 }
 
 func (db *DB) deleteBuckets(buckets []string, keys []string) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
-	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
@@ -253,11 +240,8 @@ func (db *DB) List(buckets []string, dest interface{}, params ...Params) error {
 }
 
 func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
-	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	opts := parseParams(params)
@@ -317,11 +301,8 @@ func (db *DB) ListKeys(buckets, keys []string, dest interface{}) error {
 }
 
 func (db *DB) listKeys(buckets, keys []string, dest interface{}) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
-	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	return db.db.View(func(tx *bolt.Tx) error {
@@ -376,11 +357,8 @@ func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, 
 }
 
 func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Params) error {
-	if !db.open {
-		return fmt.Errorf("db is not opened")
-	}
-	if len(buckets) == 0 {
-		return errors.New("No bucket provided")
+	if err := db.check(buckets); err != nil {
+		return err
 	}
 
 	opts := parseParams(params)
@@ -408,10 +386,12 @@ func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Param
 
 // Count returns number of records in bucket
 func (db *DB) Count(buckets []string) int {
-	if !db.open {
-		return 0
-	}
 	res := 0
+
+	if err := db.check(buckets); err != nil {
+		return res
+	}
+
 	db.db.View(func(tx *bolt.Tx) error {
 		b := getBucket(tx, buckets)
 		if b == nil {
@@ -421,6 +401,16 @@ func (db *DB) Count(buckets []string) int {
 		return nil
 	})
 	return res
+}
+
+func (d *DB) check(buckets []string) error {
+	if !db.open {
+		return fmt.Errorf("db is not opened")
+	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
+	}
+	return nil
 }
 
 func parseParams(p []Params) Params {
