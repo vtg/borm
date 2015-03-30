@@ -122,15 +122,28 @@ func TestList(t *testing.T) {
 
 	res := []Person{}
 	db.List([]string{"peoplelist"}, &res)
-	assertEqual(t, 2, len(res))
-	assertEqual(t, p.ID, res[0].ID)
-	assertEqual(t, p1.ID, res[1].ID)
+	assertEqual(t, []Person{p, p1}, res)
 
 	res1 := []*Person{}
 	db.List([]string{"peoplelist"}, &res1)
-	assertEqual(t, 2, len(res1))
-	assertEqual(t, p.ID, res1[0].ID)
-	assertEqual(t, p1.ID, res1[1].ID)
+	assertEqual(t, []*Person{&p, &p1}, res1)
+}
+
+func TestListKeys(t *testing.T) {
+	openDB()
+
+	p := Person{Name: "John Doe"}
+	db.Save([]string{"list2"}, &p)
+	p1 := Person{Name: "John1 Doe"}
+	db.Save([]string{"list2"}, &p1)
+	p2 := Person{Name: "John2 Doe"}
+	db.Save([]string{"list2"}, &p2)
+	p3 := Person{Name: "John3 Doe"}
+	db.Save([]string{"list2"}, &p3)
+
+	res := []Person{}
+	db.ListKeys([]string{"list2"}, []string{p.ID, p3.ID, "11111"}, &res)
+	assertEqual(t, []Person{p, p3}, res)
 }
 
 func TestListItems(t *testing.T) {

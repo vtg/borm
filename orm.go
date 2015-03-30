@@ -307,6 +307,66 @@ func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
 	})
 }
 
+// ListKeys fills models slice with records by keys provided
+// 		m := []Model{}
+// 		db.ListKeys([]string{"bucket"}, []string{"1","2"}, &m)
+func (db *DB) ListKeys(buckets, keys []string, dest interface{}) error {
+	l := logit(db.Log, "LISTKEYS", buckets, "", nil)
+	err := db.listKeys(buckets, keys, dest)
+	return l.done(err)
+}
+
+func (db *DB) listKeys(buckets, keys []string, dest interface{}) error {
+	if !db.open {
+		return fmt.Errorf("db is not opened")
+	}
+	if len(buckets) == 0 {
+		return errors.New("No bucket provided")
+	}
+
+	return db.db.View(func(tx *bolt.Tx) error {
+		b := getBucket(tx, buckets)
+		if b == nil {
+			return fmt.Errorf("Bucket not found")
+		}
+
+		v := reflect.ValueOf(dest)
+		if v.Kind() != reflect.Ptr {
+			return errors.New("expected pointer but value passed")
+		}
+		if v.IsNil() {
+			return errors.New("nil pointer passed")
+		}
+
+		d := reflect.Indirect(v)
+		slice, err := baseType(v.Type(), reflect.Slice)
+		if err != nil {
+			return err
+		}
+
+		ptr := slice.Elem().Kind() == reflect.Ptr
+		tp := deref(slice.Elem())
+
+		for _, key := range keys {
+			v := b.Get([]byte(key))
+			if v == nil {
+				continue
+			}
+			item := reflect.New(tp)
+			if err := unmarshal(v, item.Interface()); err != nil && err.Error() != "unexpected end of JSON input" {
+				return err
+			}
+
+			if ptr {
+				d.Set(reflect.Append(d, item))
+			} else {
+				d.Set(reflect.Append(d, reflect.Indirect(item)))
+			}
+		}
+		return nil
+	})
+}
+
 // ListItems returns raw records from database
 func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, error) {
 	l := logit(db.Log, "LIST", buckets, "", params)
