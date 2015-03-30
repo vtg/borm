@@ -153,7 +153,18 @@ func TestListItems(t *testing.T) {
 	p1 := Person{Name: "John1 Doe"}
 	db.Save([]string{"peoplelist1"}, &p1)
 
-	res, _ := db.ListItems([]string{"peoplelist"})
+	res, _ := db.ListItems([]string{"peoplelist1"})
+	assertEqual(t, 2, len(res))
+}
+
+func TestValues(t *testing.T) {
+	openDB()
+	p := Person{Name: "John Doe"}
+	db.Save([]string{"list11"}, &p)
+	p1 := Person{Name: "John1 Doe"}
+	db.Save([]string{"list11"}, &p1)
+
+	res, _ := db.Values([]string{"list11"})
 	assertEqual(t, 2, len(res))
 }
 
@@ -254,5 +265,12 @@ func BenchmarkListModels(b *testing.B) {
 	r := []Person{}
 	for n := 0; n < b.N; n++ {
 		db.List([]string{"pep"}, &r, Params{Limit: 10})
+	}
+}
+
+func BenchmarkListValues(b *testing.B) {
+	benchListPrepare()
+	for n := 0; n < b.N; n++ {
+		db.Values([]string{"pep"}, Params{Limit: 10})
 	}
 }

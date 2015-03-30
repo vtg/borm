@@ -385,6 +385,41 @@ func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Param
 	return err
 }
 
+// Values returns values from bucket
+func (db *DB) Values(buckets []string, params ...Params) ([][]byte, error) {
+	l := logit(db.Log, "VALUES", buckets, "", params)
+	res, err := db.values(buckets, params...)
+	return res, l.done(err)
+}
+
+func (db *DB) values(buckets []string, params ...Params) (res [][]byte, err error) {
+	if err = db.check(buckets); err != nil {
+		return
+	}
+
+	opts := parseParams(params)
+
+	err = db.db.View(func(tx *bolt.Tx) error {
+		b := getBucket(tx, buckets)
+		if b == nil {
+			return fmt.Errorf("Bucket not found")
+		}
+
+		i := 0
+		c := b.Cursor()
+		for k, v := cursorStart(c, opts.Reverse); k != nil; k, v = cursorNext(c, opts.Reverse) {
+			if i < opts.Offset || i > opts.Offset+opts.Limit {
+				continue
+			}
+			i++
+			res = append(res, v)
+		}
+
+		return nil
+	})
+	return
+}
+
 // Count returns number of records in bucket
 func (db *DB) Count(buckets []string) int {
 	res := 0
