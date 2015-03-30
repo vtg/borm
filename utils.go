@@ -108,14 +108,14 @@ func eventName(name string, m mod) string {
 	return typeName(m) + name
 }
 
-func cursorStart(c *bolt.Cursor, rev bool) (k []byte, v []byte) {
+func cursorStart(c *bolt.Cursor, rev bool) (k, v []byte) {
 	if rev {
 		return c.Last()
 	}
 	return c.First()
 }
 
-func cursorNext(c *bolt.Cursor, rev bool) (k []byte, v []byte) {
+func cursorNext(c *bolt.Cursor, rev bool) (k, v []byte) {
 	if rev {
 		return c.Prev()
 	}
