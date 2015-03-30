@@ -439,7 +439,7 @@ func (db *DB) Count(path []string) int {
 	return res
 }
 
-func (d *DB) check(path []string) error {
+func (db *DB) check(path []string) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
