@@ -53,20 +53,20 @@ func (db *DB) Close() {
 // Find returns model from database
 // 		m := Model{}
 // 		db.Find([]string{"bucket"}, &m)
-func (db *DB) Find(buckets []string, id string, i interface{}) error {
-	l := logit(db.Log, "FIND", buckets, id, nil)
-	err := db.find(buckets, id, i)
+func (db *DB) Find(path []string, id string, i interface{}) error {
+	l := logit(db.Log, "FIND", path, id, nil)
+	err := db.find(path, id, i)
 	return l.done(err)
 }
 
-func (db *DB) find(buckets []string, id string, i interface{}) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) find(path []string, id string, i interface{}) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	return db.db.View(func(tx *bolt.Tx) error {
 		var err error
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return errors.New("Bucket not found")
 		}
@@ -81,20 +81,20 @@ func (db *DB) find(buckets []string, id string, i interface{}) error {
 
 // GET returns value by key
 // 		val, err := db.FindValue([]string{"bucket"}, "1")
-func (db *DB) Get(buckets []string, key string) ([]byte, error) {
-	l := logit(db.Log, "GET", buckets, key, nil)
-	v, err := db.get(buckets, key)
+func (db *DB) Get(path []string, key string) ([]byte, error) {
+	l := logit(db.Log, "GET", path, key, nil)
+	v, err := db.get(path, key)
 	return v, l.done(err)
 }
 
-func (db *DB) get(buckets []string, key string) ([]byte, error) {
-	if err := db.check(buckets); err != nil {
+func (db *DB) get(path []string, key string) ([]byte, error) {
+	if err := db.check(path); err != nil {
 		return nil, err
 	}
 
 	var v []byte
 	err := db.db.View(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return errors.New("Bucket not found")
 		}
@@ -107,19 +107,19 @@ func (db *DB) get(buckets []string, key string) ([]byte, error) {
 // Save saves model into database
 // 		m := Model{Name: "Model Name"}
 // 		db.Save([]string{"bucket"}, &m)
-func (db *DB) Save(buckets []string, m mod) error {
-	l := logit(db.Log, "SAVE", buckets, "", m)
-	err := db.save(buckets, m)
+func (db *DB) Save(path []string, m mod) error {
+	l := logit(db.Log, "SAVE", path, "", m)
+	err := db.save(path, m)
 	return l.done(err)
 }
 
-func (db *DB) save(buckets []string, m mod) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) save(path []string, m mod) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
-		b, err := createBucket(tx, buckets)
+		b, err := createBucket(tx, path)
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
@@ -145,19 +145,19 @@ func (db *DB) save(buckets []string, m mod) error {
 }
 
 // SaveValue saves key/value pair into database
-func (db *DB) SaveValue(buckets []string, id string, val []byte) error {
-	l := logit(db.Log, "SAVE-VALUE", buckets, "", val)
-	err := db.saveValue(buckets, id, val)
+func (db *DB) SaveValue(path []string, id string, val []byte) error {
+	l := logit(db.Log, "SAVE-VALUE", path, "", val)
+	err := db.saveValue(path, id, val)
 	return l.done(err)
 }
 
-func (db *DB) saveValue(buckets []string, id string, val []byte) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) saveValue(path []string, id string, val []byte) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
-		b, err := createBucket(tx, buckets)
+		b, err := createBucket(tx, path)
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
@@ -169,8 +169,8 @@ func (db *DB) saveValue(buckets []string, id string, val []byte) error {
 // 		m := Model{}
 // 		db.Find([]string{"bucket"}, &m)
 // 		db.Delete([]string{"bucket"}, &m)
-func (db *DB) Delete(buckets []string, m mod) error {
-	err := db.DeleteKeys(buckets, []string{m.GetID()})
+func (db *DB) Delete(path []string, m mod) error {
+	err := db.DeleteKeys(path, []string{m.GetID()})
 	if err == nil {
 		addEvent("Deleted", m)
 	}
@@ -179,19 +179,19 @@ func (db *DB) Delete(buckets []string, m mod) error {
 
 // DeleteKeys deletes records from database by keys
 // 		db.DeleteKeys([]string{"bucket"}, []string{"1","2","3"})
-func (db *DB) DeleteKeys(buckets []string, keys []string) error {
-	l := logit(db.Log, "Delete", buckets, "", keys)
-	err := db.deleteKeys(buckets, keys)
+func (db *DB) DeleteKeys(path []string, keys []string) error {
+	l := logit(db.Log, "Delete", path, "", keys)
+	err := db.deleteKeys(path, keys)
 	return l.done(err)
 }
 
-func (db *DB) deleteKeys(buckets []string, keys []string) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) deleteKeys(path []string, keys []string) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -204,19 +204,19 @@ func (db *DB) deleteKeys(buckets []string, keys []string) error {
 
 // DeleteBuckets deletes records from database by keys
 // 		db.DeleteBuckets([]string{"bucket"}, []string{"1","2","3"})
-func (db *DB) DeleteBuckets(buckets []string, keys []string) error {
-	l := logit(db.Log, "DELETE BUCKET", buckets, "", keys)
-	err := db.deleteBuckets(buckets, keys)
+func (db *DB) DeleteBuckets(path []string, keys []string) error {
+	l := logit(db.Log, "DELETE BUCKET", path, "", keys)
+	err := db.deleteBuckets(path, keys)
 	return l.done(err)
 }
 
-func (db *DB) deleteBuckets(buckets []string, keys []string) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) deleteBuckets(path []string, keys []string) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	return db.db.Update(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -234,21 +234,21 @@ func (db *DB) deleteBuckets(buckets []string, keys []string) error {
 // 		db.List([]string{"bucket"}, &m)
 // load with params
 // 		db.List([]string{"bucket"}, &m, Params{Offset: 10, Limit: 30})
-func (db *DB) List(buckets []string, dest interface{}, params ...Params) error {
-	l := logit(db.Log, "LIST", buckets, "", params)
-	err := db.list(buckets, dest, params...)
+func (db *DB) List(path []string, dest interface{}, params ...Params) error {
+	l := logit(db.Log, "LIST", path, "", params)
+	err := db.list(path, dest, params...)
 	return l.done(err)
 }
 
-func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) list(path []string, dest interface{}, params ...Params) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	opts := parseParams(params)
 
 	return db.db.View(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -295,19 +295,19 @@ func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
 // ListKeys fills models slice with records by keys provided
 // 		m := []Model{}
 // 		db.ListKeys([]string{"bucket"}, [][]byte{[]byte("1"),[]byte("2")}, &m)
-func (db *DB) ListKeys(buckets []string, keys [][]byte, dest interface{}) error {
-	l := logit(db.Log, "LISTKEYS", buckets, "", nil)
-	err := db.listKeys(buckets, keys, dest)
+func (db *DB) ListKeys(path []string, keys [][]byte, dest interface{}) error {
+	l := logit(db.Log, "LISTKEYS", path, "", nil)
+	err := db.listKeys(path, keys, dest)
 	return l.done(err)
 }
 
-func (db *DB) listKeys(buckets []string, keys [][]byte, dest interface{}) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) listKeys(path []string, keys [][]byte, dest interface{}) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	return db.db.View(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -350,22 +350,22 @@ func (db *DB) listKeys(buckets []string, keys [][]byte, dest interface{}) error 
 }
 
 // ListItems returns raw records from database
-func (db *DB) ListItems(buckets []string, params ...Params) (map[string][]byte, error) {
-	l := logit(db.Log, "LIST", buckets, "", params)
+func (db *DB) ListItems(path []string, params ...Params) (map[string][]byte, error) {
+	l := logit(db.Log, "LIST", path, "", params)
 	res := make(map[string][]byte)
-	err := db.listItems(buckets, res, params...)
+	err := db.listItems(path, res, params...)
 	return res, l.done(err)
 }
 
-func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Params) error {
-	if err := db.check(buckets); err != nil {
+func (db *DB) listItems(path []string, res map[string][]byte, params ...Params) error {
+	if err := db.check(path); err != nil {
 		return err
 	}
 
 	opts := parseParams(params)
 
 	err := db.db.View(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -386,21 +386,21 @@ func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Param
 }
 
 // Values returns values from bucket
-func (db *DB) Values(buckets []string, params ...Params) ([][]byte, error) {
-	l := logit(db.Log, "VALUES", buckets, "", params)
-	res, err := db.values(buckets, params...)
+func (db *DB) Values(path []string, params ...Params) ([][]byte, error) {
+	l := logit(db.Log, "VALUES", path, "", params)
+	res, err := db.values(path, params...)
 	return res, l.done(err)
 }
 
-func (db *DB) values(buckets []string, params ...Params) (res [][]byte, err error) {
-	if err = db.check(buckets); err != nil {
+func (db *DB) values(path []string, params ...Params) (res [][]byte, err error) {
+	if err = db.check(path); err != nil {
 		return
 	}
 
 	opts := parseParams(params)
 
 	err = db.db.View(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -421,15 +421,15 @@ func (db *DB) values(buckets []string, params ...Params) (res [][]byte, err erro
 }
 
 // Count returns number of records in bucket
-func (db *DB) Count(buckets []string) int {
+func (db *DB) Count(path []string) int {
 	res := 0
 
-	if err := db.check(buckets); err != nil {
+	if err := db.check(path); err != nil {
 		return res
 	}
 
 	db.db.View(func(tx *bolt.Tx) error {
-		b := getBucket(tx, buckets)
+		b := getBucket(tx, path)
 		if b == nil {
 			return fmt.Errorf("Bucket not found")
 		}
@@ -439,11 +439,11 @@ func (db *DB) Count(buckets []string) int {
 	return res
 }
 
-func (d *DB) check(buckets []string) error {
+func (d *DB) check(path []string) error {
 	if !db.open {
 		return fmt.Errorf("db is not opened")
 	}
-	if len(buckets) == 0 {
+	if len(path) == 0 {
 		return errors.New("No bucket provided")
 	}
 	return nil
