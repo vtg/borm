@@ -15,8 +15,9 @@ var Events = *pubsub.Hub
 
 // Params for List query
 type Params struct {
-	Offset int
-	Limit  int
+	Offset  int
+	Limit   int
+	Reverse bool
 }
 
 func init() {
@@ -271,8 +272,8 @@ func (db *DB) list(buckets []string, dest interface{}, params ...Params) error {
 
 		c := b.Cursor()
 		i := 0
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if len(v) == 0 || i < opts.Offset || i > opts.Offset+opts.Limit {
+		for k, v := cursorStart(c, opts.Reverse); k != nil; k, v = cursorNext(c, opts.Reverse) {
+			if v == nil || i < opts.Offset || i > opts.Offset+opts.Limit {
 				continue
 			}
 			i++
@@ -371,7 +372,7 @@ func (db *DB) listItems(buckets []string, res map[string][]byte, params ...Param
 
 		i := 0
 		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		for k, v := cursorStart(c, opts.Reverse); k != nil; k, v = cursorNext(c, opts.Reverse) {
 			if i < opts.Offset || i > opts.Offset+opts.Limit {
 				continue
 			}
