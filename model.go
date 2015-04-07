@@ -1,14 +1,14 @@
 package borm
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type mod interface {
 	GetID() string
 	setID(id string)
-}
-
-type modCreate interface {
-	setCreation()
+	Created() time.Time
 }
 
 type modUpdate interface {
@@ -31,17 +31,14 @@ func (i *MID) GetID() string {
 	return i.ID
 }
 
+// Created returns creation time
+func (i *MID) Created() time.Time {
+	u, _ := strconv.ParseInt(i.ID, 10, 64)
+	return time.Unix(0, u)
+}
+
 func (i *MID) setID(id string) {
 	i.ID = id
-}
-
-// CreateTime struct for managing creation time
-type CreateTime struct {
-	Created time.Time
-}
-
-func (c *CreateTime) setCreation() {
-	c.Created = time.Now()
 }
 
 // UpdateTime struct for managing update time
