@@ -19,12 +19,17 @@ var db DB
 func init() {
 	_, filename, _, _ := runtime.Caller(0) // get full path of this file
 	dbFile = path.Join(path.Dir(filename), "test.db")
+	fmt.Println(db)
 	os.Remove(dbFile)
 }
 
 func openDB() {
+	var err error
 	if !db.open {
-		db, _ = Open(dbFile)
+		db, err = Open(dbFile)
+		if err != nil {
+			fmt.Println(err)
+		}
 		// db.Log = true
 	}
 }
@@ -40,19 +45,19 @@ func assertEqual(t *testing.T, expect interface{}, v interface{}) {
 }
 
 func TestDBOpen(t *testing.T) {
-	db, err := Open(dbFile)
-
+	db1, err := Open(dbFile)
+	defer db1.Close()
 	assertEqual(t, nil, err)
-	assertEqual(t, dbFile, db.File)
-	assertEqual(t, true, db.open)
+	assertEqual(t, dbFile, db1.File)
+	assertEqual(t, true, db1.open)
 }
 
 func TestDBOpenError(t *testing.T) {
-	db, err := Open("Z:::/qwe")
-
-	assertEqual(t, "open Z:::/qwe: The filename, directory name, or volume label syntax is incorrect.", err.Error())
-	assertEqual(t, "", db.File)
-	assertEqual(t, false, db.open)
+	db2, err := Open("Z:::/qwe")
+	// defer db2.Close()
+	assertEqual(t, "open Z:::/qwe: no such file or directory", err.Error())
+	assertEqual(t, "", db2.File)
+	assertEqual(t, false, db2.open)
 }
 
 type Person struct {
