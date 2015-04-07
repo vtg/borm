@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/boltdb/bolt"
 )
@@ -76,15 +77,15 @@ func baseType(t reflect.Type, expected reflect.Kind) (reflect.Type, error) {
 	return t, nil
 }
 
-func checkID(b *bolt.Bucket, m mod) (id string, newItem bool) {
+func checkID(m mod) (id string, newItem bool) {
 	id = m.GetID()
 	if id == "" {
 		newItem = true
-		id = nextID(b)
+		id = fmt.Sprint(time.Now().UnixNano())
 		m.setID(id)
-		if m1, ok := m.(modCreate); ok {
-			m1.setCreation()
-		}
+		// if m1, ok := m.(modCreate); ok {
+		// 	m1.setCreation()
+		// }
 		if m1, ok := m.(modUpdate); ok {
 			m1.touchModel()
 		}

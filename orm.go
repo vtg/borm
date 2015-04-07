@@ -124,7 +124,7 @@ func (db *DB) save(path []string, m mod) error {
 			return fmt.Errorf("create bucket: %s", err)
 		}
 
-		id, newItem := checkID(b, m)
+		id, newItem := checkID(m)
 
 		enc, err := marshal(m)
 		if err != nil {

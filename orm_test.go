@@ -6,6 +6,7 @@ import (
 	"path"
 	"reflect"
 	"runtime"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -66,7 +67,6 @@ type Person struct {
 	Name   string
 	Active bool
 
-	CreateTime
 	UpdateTime
 }
 
@@ -94,13 +94,19 @@ func TestSave(t *testing.T) {
 	p := Person{Name: "John Doe"}
 	db.Save([]string{"people"}, &p)
 
-	assertEqual(t, "1", p.ID)
+	assertEqual(t, true, p.ID != "")
 	assertEqual(t, false, p.Active)
 
+	u, _ := strconv.ParseInt(p.ID, 10, 64)
+	assertEqual(t, time.Unix(0, u), p.Created())
+
+	id := p.ID
+
+	p.Created()
 	// test update
 	p.Active = true
 	db.Save([]string{"people"}, &p)
-	assertEqual(t, "1", p.ID)
+	assertEqual(t, id, p.ID)
 	assertEqual(t, true, p.Active)
 }
 
